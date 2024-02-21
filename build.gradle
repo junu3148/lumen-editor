@@ -22,17 +22,52 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+	// 웹서버 개발을 위한
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
-	compileOnly 'org.projectlombok:lombok'
+	// html 변깅시 자동 재부팅
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
+	// 테스트 라이브러리
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+
+
+	// 롬북 라이브러리
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	// JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// Spring Boot Starter Data Redis
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+	// Redis 클라이언트 Lettuce (Spring Boot Starter Data Redis에 포함되어 있음)
+	// 추가적으로 필요한 경우
+	// implementation 'io.lettuce:lettuce-core'
+
+	// Mysql
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+	// Spring Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	// AOP
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'ch.qos.logback:logback-classic'
+	implementation 'org.aspectj:aspectjweaver'
+	implementation 'org.slf4j:slf4j-api'
+
 }
 
 tasks.named('test') {
