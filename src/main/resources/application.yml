@@ -10,6 +10,16 @@ server:
 
 # Spring 설정
 spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
   main:
     allow-bean-definition-overriding: true
 
@@ -20,29 +30,24 @@ spring:
     password: VIKING
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-    jpa:
-      show-sql: true # System.out로 SQL 문을 출력합니다.
-      hibernate:
-        ddl-auto: create # 애플리케이션 시작 시 데이터베이스 스키마를 생성합니다.
-        naming:
-          physical-strategy: com.lumeneditor.www.config.NamingStrategy # 커스텀 네이밍 전략 클래스
-          implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy # 스프링 부트의 기본 암시적 네이밍 전략
-      properties:
-        hibernate:
-          format_sql: true # SQL 포맷을 보기 좋게 출력합니다.
-          dialect: org.hibernate.dialect.MySQL5InnoDBDialect # MySQL InnoDB Dialect를 사용합니다.
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: com.lumeneditor.www.config.CustomNamingStrategy
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
 
 
 # JWT 설정
 jwt:
   secret: 64461f01e1s23mf93ngrg2fd9501ce59142452199ff112fb5404c8e7e98e3ff
 
-redis:
-   host: localhost # Redis 서버 호스트
-   port: 6379 # Redis 서버 포트
-   password: 123 # Redis 암호 (설정이 필요한 경우)
-   lettuce:
-     pool: # 커넥션 풀 설정 (필요한 경우)
-       max-active: 8
-       max-idle: 8
-       min-idle: 0
+
+# 로그설정
+logging:
+  level:
+    root: INFO
+    com.lumeneditor.www: DEBUG
+  file:
+    name: logs/myapp.log

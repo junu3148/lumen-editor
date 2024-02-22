@@ -25,6 +25,8 @@ dependencies {
 
 
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	testImplementation 'org.hamcrest:hamcrest:2.2'
+
 
 	// 웹서버 개발을 위한
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -32,7 +34,6 @@ dependencies {
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	// 테스트 라이브러리
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-
 
 	// 롬북 라이브러리
 	compileOnly 'org.projectlombok:lombok'
@@ -48,7 +49,7 @@ dependencies {
 
 	// Redis 클라이언트 Lettuce (Spring Boot Starter Data Redis에 포함되어 있음)
 	// 추가적으로 필요한 경우
-	// implementation 'io.lettuce:lettuce-core'
+	 implementation 'io.lettuce:lettuce-core'
 
 	// Mysql
 	runtimeOnly 'com.mysql:mysql-connector-j'
@@ -56,6 +57,7 @@ dependencies {
 
 	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	testImplementation 'org.springframework.security:spring-security-test'
 
 	// JWT
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -73,3 +75,5 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+

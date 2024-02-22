@@ -80,9 +80,12 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(this.role));
+        if (this.role != null && !this.role.isEmpty()) {
+            authorities.add(new SimpleGrantedAuthority(this.role));
+        }
         return authorities;
     }
+
 
     @Override
     public boolean isAccountNonExpired() {

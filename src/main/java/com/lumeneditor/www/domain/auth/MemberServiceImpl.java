@@ -1,10 +1,10 @@
 package com.lumeneditor.www.domain.auth;
 
-import com.lumeneditor.www.domain.auth.MemberService;
 import com.lumeneditor.www.security.JwtTokenProvider;
 import com.lumeneditor.www.web.dto.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 @Service
 @RequiredArgsConstructor
@@ -39,24 +40,60 @@ public class MemberServiceImpl implements MemberService {
     // 사용자 로그인을 처리하고, JWT 토큰을 생성하여 반환
     @Override
     @Transactional
-    public ResponseEntity<JwtToken> signInAndGenerateJwtToken(User user) {
+    public JwtToken signInAndGenerateJwtToken(User user) {
         String username = user.getUsername();
         String password = user.getPassword();
 
         if (!isValidEmail(username)) {
-            return badRequestResponse();
+            return badRequestJwtToken(); // 변경된 부분
         }
-
         try {
-            JwtToken jwtToken = authenticateAndGenerateToken(username, password);
-
-            return buildResponseWithToken(jwtToken);
+            return authenticateAndGenerateToken(username, password);
         } catch (AuthenticationException e) {
-            return unauthorizedResponse(INVALID_CREDENTIALS_MESSAGE);
+            return unauthorizedJwtToken(INVALID_CREDENTIALS_MESSAGE); // 변경된 부분
         }
     }
 
-/*    // 리프레시 토큰의 유효성을 검사한 후, 새로운 액세스 토큰을 발행
+
+    // 주어진 사용자 이름과 비밀번호를 사용하여 사용자를 인증하고, JWT 토큰을 생성
+    private JwtToken authenticateAndGenerateToken(String username, String password) {
+        Authentication authentication = authenticateUser(username, password);
+        return jwtTokenProvider.generateToken(authentication);
+    }
+
+    // 사용자 이름과 비밀번호로 사용자를 인증
+    private Authentication authenticateUser(String username, String password) {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        return authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+    }
+
+
+    // JWT 토큰을 포함한 ResponseEntity를 생성
+    private ResponseEntity<JwtToken> buildResponseWithToken(JwtToken jwtToken) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add(AUTHORIZATION_HEADER, BEARER_PREFIX + jwtToken.getAccessToken());
+        return new ResponseEntity<>(jwtToken, httpHeaders, HttpStatus.OK);
+    }
+
+
+    // 잘못된 요청에 대한 응답을 생성하여 반환
+    private JwtToken badRequestJwtToken() {
+        JwtToken errorToken = new JwtToken();
+        errorToken.setErrorMessage(INVALID_EMAIL_MESSAGE);
+        return errorToken; // JwtToken 객체를 직접 반환
+    }
+
+    // 인증되지 않은 요청에 대한 응답을 생성하여 반환
+    private JwtToken unauthorizedJwtToken(String message) {
+        JwtToken errorToken = new JwtToken();
+        errorToken.setErrorMessage(message);
+        return errorToken; // JwtToken 객체를 직접 반환
+    }
+
+
+/*
+
+    // 리프레시 토큰의 유효성을 검사한 후, 새로운 액세스 토큰을 발행
     @Override
     @Transactional
     public ResponseEntity<String> refreshTokenCK(String refreshToken) {
@@ -78,38 +115,17 @@ public class MemberServiceImpl implements MemberService {
         }
         // 토큰이 유효하지 않거나 조회되지 않는 경우, 적절한 응답 반환
         return unauthorizedStringResponse(INVALID_TOKEN_MESSAGE);
-    }*/
-
-
-    // 주어진 사용자 이름과 비밀번호를 사용하여 사용자를 인증하고, JWT 토큰을 생성
-    private JwtToken authenticateAndGenerateToken(String username, String password) {
-        Authentication authentication = authenticateUser(username, password);
-        return jwtTokenProvider.generateToken(authentication);
     }
 
-    // 사용자 이름과 비밀번호로 사용자를 인증
-    private Authentication authenticateUser(String username, String password) {
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        return authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-    }
-/*
     // 제공된 리프레시 토큰이 유효한지 검사
     private boolean isValidRefreshToken(String refreshToken) {
         return refreshToken != null && jwtTokenProvider.validateToken(refreshToken)
                 && tokenRepository.refreshTokenCK(refreshToken).isPresent();
-    }*/
-
-/*    // 제공된 리프레시 토큰을 사용하여 새로운 액세스 토큰을 생성
+    }
+   // 제공된 리프레시 토큰을 사용하여 새로운 액세스 토큰을 생성
     private String createNewAccessToken(String refreshToken) {
         Optional<RefreshToken> tokenData = tokenRepository.refreshTokenCK(refreshToken);
         return jwtTokenProvider.generateAccessToken(tokenData);
-    }*/
-
-    // JWT 토큰을 포함한 ResponseEntity를 생성
-    private ResponseEntity<JwtToken> buildResponseWithToken(JwtToken jwtToken) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(AUTHORIZATION_HEADER, BEARER_PREFIX + jwtToken.getAccessToken());
-        return new ResponseEntity<>(jwtToken, httpHeaders, HttpStatus.OK);
     }
 
     // 토큰을 사용하여 JWT 토큰을 포함한 ResponseEntity를 생성
@@ -124,24 +140,7 @@ public class MemberServiceImpl implements MemberService {
         return new ResponseEntity<>(responseBody, headers, HttpStatus.OK);
     }
 
-    // 잘못된 요청에 대한 응답을 생성하여 반환
-    private ResponseEntity<JwtToken> badRequestResponse() {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        JwtToken errorToken = new JwtToken();
-        errorToken.setErrorMessage(INVALID_EMAIL_MESSAGE);
-        // JwtToken 객체를 반환하도록 수정
-        return new ResponseEntity<>(errorToken, httpHeaders, HttpStatus.BAD_REQUEST);
-    }
-
-    // 인증되지 않은 요청에 대한 응답을 생성하여 반환
-    private ResponseEntity<JwtToken> unauthorizedResponse(String message) {
-        JwtToken errorToken = new JwtToken();
-        errorToken.setErrorMessage(message);
-        // JwtToken 객체를 반환하도록 수정
-        return new ResponseEntity<>(errorToken, HttpStatus.UNAUTHORIZED);
-    }
-
-    // 인증되지 않은 요청에 대한 문자열 응답을 생성하여 반환
+        // 인증되지 않은 요청에 대한 문자열 응답을 생성하여 반환
     private ResponseEntity<String> unauthorizedStringResponse(String message) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(message);
     }
@@ -151,6 +150,9 @@ public class MemberServiceImpl implements MemberService {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ERROR_PROCESSING_MESSAGE);
     }
 
+
+
+    */
 
     // 이메일 형식 체크
     private boolean isValidEmail(String email) {

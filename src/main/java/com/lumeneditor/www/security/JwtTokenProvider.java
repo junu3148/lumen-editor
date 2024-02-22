@@ -1,5 +1,6 @@
 package com.lumeneditor.www.security;
 
+import com.lumeneditor.www.config.RedisConfig;
 import com.lumeneditor.www.exception.CustomExpiredJwtException;
 import com.lumeneditor.www.exception.InvalidTokenException;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
@@ -9,6 +10,8 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,12 +22,14 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class JwtTokenProvider {
 
+    private final RedisTemplate<String, String> redisTemplate;
     private final Key key;
     private final long ACCESS_TOKEN_EXPIRE_COUNT = 30 * 60 * 1000L; // 30분
     private final long REFRESH_TOKEN_EXPIRE_COUNT = 8 * 60 * 60 * 1000L; // 8시간
@@ -34,7 +39,7 @@ public class JwtTokenProvider {
     private static final String CLAIM_IS_ADMIN = "roles";
 
     // application.yml에서 secret 값 가져와서 key에 저장
-    public JwtTokenProvider(@Value("${jwt.secret}") String secretKey) {
+    public JwtTokenProvider(RedisTemplate<String, String> redisTemplate, @Value("${jwt.secret}") String secretKey) {
         // 시크릿 키가 null 또는 빈 문자열인 경우 예외를 발생시킵니다.
         if (secretKey == null || secretKey.isEmpty()) {
             throw new IllegalArgumentException("Secret key cannot be null or empty.");
@@ -42,6 +47,8 @@ public class JwtTokenProvider {
 
         // Base64 디코딩을 사용하여 시크릿 키 문자열을 바이트 배열로 변환합니다.
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+
+        this.redisTemplate = redisTemplate;
 
         // 변환된 바이트 배열을 사용하여 HmacSHA 키를 생성합니다.
         this.key = Keys.hmacShaKeyFor(keyBytes);
@@ -58,7 +65,7 @@ public class JwtTokenProvider {
      * 리프레시 토큰은 8시간 동안 유효합니다.
      *
      * @param authentication 인증된 사용자의 Authentication 객체. 사용자의 이름과 권한 정보를 포함합니다.
-     * @return 생성된 JWT 액세스 토큰과 리프레시 토큰이 포함된 JwtToken 객체.
+     * @return 생성된 JWT 액세스 토큰이 포함된 JwtToken 객체.
      */
     public JwtToken generateToken(Authentication authentication) {
         String roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
@@ -84,12 +91,20 @@ public class JwtTokenProvider {
                 .compact();
 
 
+        // Redis에 리프레시 토큰 저장
+        redisTemplate.opsForValue().set(
+                authentication.getName(),
+                refreshToken,
+                REFRESH_TOKEN_EXPIRE_COUNT,
+                TimeUnit.MILLISECONDS
+        );
+
         return JwtToken.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
-                .refreshToken(refreshToken)
                 .build();
     }
+
     /**
      * 주어진 RefreshToken 객체를 이용하여 새로운 액세스 토큰을 생성합니다.
      * 이 메서드는 RefreshToken 객체로부터 사용자의 이름과 역할을 추출하여
