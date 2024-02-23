@@ -8,10 +8,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,6 +19,26 @@ public class AuthController {
 
     private final MemberService memberService;
     private final AuthService authService;
+
+
+    // 이메일 중복 체크
+    @PostMapping("idCheck")
+    public ResponseEntity<Boolean> checkEmailDuplication(@RequestBody User user) {
+        return authService.checkEmailDuplication(user);
+    }
+
+    // 회원 가입
+    @PostMapping("signup")
+    public ResponseEntity<String> signUp(@RequestBody User user) {
+
+
+
+
+    return null;
+    }
+
+
+
 
     // 로그인
     @PostMapping("login")

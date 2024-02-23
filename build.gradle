@@ -70,6 +70,11 @@ dependencies {
 	implementation 'org.aspectj:aspectjweaver'
 	implementation 'org.slf4j:slf4j-api'
 
+	// Email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+	implementation group: 'commons-io', name: 'commons-io', version: '2.12.0'
+
 }
 
 tasks.named('test') {

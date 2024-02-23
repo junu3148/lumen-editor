@@ -2,28 +2,31 @@ package com.lumeneditor.www.exception;
 
 import org.springframework.security.core.AuthenticationException;
 
-/**
- * InvalidTokenException 클래스는 인증 과정에서 토큰이 유효하지 않을 때 발생하는 예외를 표현합니다.
- * 이 클래스는 AuthenticationException을 확장하여, 인증 과정 중 특정한 오류 상황을 더 명확하게 구분할 수 있도록 합니다.
- */
+
 public class InvalidTokenException extends AuthenticationException {
 
+
     /**
-     * 예외 메시지를 받아 이를 상위 클래스인 AuthenticationException에 전달하는 기본 생성자입니다.
+     * InvalidTokenException을 생성하는 기본 생성자입니다.
+     * 이 생성자는 유효하지 않은 토큰에 대한 예외를 표현할 때 사용됩니다.
+     * 예외 메시지만을 인자로 받아, 상세한 예외 상황을 설명할 수 있습니다.
      *
-     * @param msg 발생한 예외에 대한 설명을 포함하는 문자열입니다.
+     * @param msg 예외 상황을 설명하는 문자열입니다. 예외가 발생한 원인이나 상황을 명시할 수 있습니다.
      */
+
     public InvalidTokenException(String msg) {
         super(msg);
     }
 
     /**
-     * 예외 메시지와 원인을 나타내는 Throwable 객체를 받아 상위 클래스에 전달하는 생성자입니다.
-     * 이 생성자는 예외가 발생한 근본적인 원인을 함께 제공할 수 있도록 합니다.
+     * InvalidTokenException을 생성하는 확장된 생성자입니다.
+     * 이 생성자는 유효하지 않은 토큰에 대한 예외와 그 원인이 되는 Throwable을 함께 받습니다.
+     * 예외 메시지와 함께 예외의 원인이 되는 다른 예외를 체이닝할 때 사용됩니다.
      *
-     * @param msg   발생한 예외에 대한 설명을 포함하는 문자열입니다.
-     * @param cause 예외의 원인을 나타내는 Throwable 객체입니다.
+     * @param msg 예외 상황을 설명하는 문자열입니다. 이 메시지는 예외가 발생한 구체적인 원인을 명시할 수 있습니다.
+     * @param cause 원인이 되는 Throwable 객체입니다. 이는 현재 예외의 발생 원인을 나타내는 데 사용됩니다.
      */
+
     public InvalidTokenException(String msg, Throwable cause) {
         super(msg, cause);
     }

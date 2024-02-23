@@ -52,21 +52,20 @@ public class JwtTokenProvider {
 
         // 변환된 바이트 배열을 사용하여 HmacSHA 키를 생성합니다.
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        // TokenRepository 인스턴스를 할당합니다.
 
-        // TokenRepository 인스턴스를 할당합니다.
     }
 
 
     /**
-     * 인증된 사용자의 Authentication 객체를 받아 JWT 액세스 토큰과 리프레시 토큰을 생성합니다.
-     * 이 메서드는 사용자의 권한을 기반으로 JWT 액세스 토큰을 생성하며, 해당 토큰은 30분 동안 유효합니다.
-     * 또한, 사용자를 위한 리프레시 토큰을 생성하거나 기존에 존재하는 리프레시 토큰을 조회하여 반환합니다.
-     * 리프레시 토큰은 8시간 동안 유효합니다.
+     * 인증된 사용자를 위한 액세스 토큰과 리프레시 토큰을 생성합니다.
+     * 이 메서드는 사용자의 인증 정보를 바탕으로 JWT 토큰을 생성하며, 사용자의 권한을 토큰에 포함시킵니다.
+     * 생성된 액세스 토큰은 30분 동안 유효하며, 리프레시 토큰은 8시간 동안 유효합니다.
+     * 리프레시 토큰은 Redis에 저장되어 액세스 토큰 재발급 시 사용됩니다.
      *
-     * @param authentication 인증된 사용자의 Authentication 객체. 사용자의 이름과 권한 정보를 포함합니다.
-     * @return 생성된 JWT 액세스 토큰이 포함된 JwtToken 객체.
+     * @param authentication Spring Security의 Authentication 객체, 인증된 사용자의 정보를 포함합니다.
+     * @return 생성된 JWT 액세스 토큰을 포함하는 JwtToken 객체를 반환합니다.
      */
+
     public JwtToken generateToken(Authentication authentication) {
         String roles = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -105,15 +104,8 @@ public class JwtTokenProvider {
                 .build();
     }
 
-    /**
-     * 주어진 RefreshToken 객체를 이용하여 새로운 액세스 토큰을 생성합니다.
-     * 이 메서드는 RefreshToken 객체로부터 사용자의 이름과 역할을 추출하여
-     * JWT 토큰을 생성합니다. 생성된 토큰은 30분 동안 유효합니다.
-     *
-     * @param tokenData Optional<RefreshToken> 형태로 제공되는 토큰 데이터.
-     *                  이 데이터는 사용자의 이름과 역할 정보를 포함하고 있어야 합니다.
-     * @return 생성된 JWT 액세스 토큰 문자열.
-     */
+
+    // 수정 쿠키에서 빼서 확인하는걸로
     public String generateAccessToken(Optional<RefreshToken> tokenData) {
         if (tokenData.isEmpty()) {
             throw new IllegalArgumentException("Token data must be present");
@@ -132,11 +124,16 @@ public class JwtTokenProvider {
     }
 
     /**
-     * JWT 토큰에서 관리자 사용자 정보를 추출하여 adminId 반환합니다.
+     * 제공된 토큰에서 관리자 사용자의 정보를 추출합니다.
+     * 이 메서드는 주어진 JWT 토큰을 파싱하여, 토큰에 포함된 관리자 사용자의 ID 정보를 추출합니다.
+     * JWT 토큰은 인증된 사용자의 정보를 안전하게 전송하기 위해 사용되며,
+     * 여기서는 관리자 사용자의 고유 ID를 토큰에서 추출하는 데 사용됩니다.
      *
-     * @param token JWT 토큰 문자열.
-     * @return adminId 반환
+     * @param token 인증 정보를 포함하고 있는 JWT 토큰 문자열입니다.
+     * @return 관리자 사용자의 ID를 문자열로 반환합니다. 토큰 파싱 과정에서 관리자 사용자 ID가 추출되며,
+     *         이는 시스템 내에서 관리자 사용자를 식별하는 데 사용됩니다.
      */
+
     public String getAdminUserInfoFromToken(String token) {
 
         // 토큰을 파싱하여 Claims 객체를 얻습니다.
@@ -147,19 +144,32 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 JWT 토큰을 파싱하여 Claims 객체를 반환합니다.
-     * 이 메서드는 JWT 토큰의 유효성을 검증하고, 토큰 내부에 저장된 클레임(claim)들을 추출합니다.
+     * JWT 토큰에서 클레임을 파싱합니다.
      *
-     * @param token 파싱할 JWT 토큰 문자열.
-     * @return 토큰에서 추출된 Claims 객체.
-     * @throws io.jsonwebtoken.JwtException 토큰이 유효하지 않거나 파싱 중 문제가 발생한 경우.
+     * 이 메서드는 주어진 JWT 토큰을 해석하여 클레임(Claims) 객체를 반환합니다.
+     * 클레임 객체에는 토큰의 발행자, 유효 기간, 주체 등의 정보가 포함될 수 있습니다.
+     *
+     * @param token 검증하고자 하는 JWT 토큰 문자열입니다.
+     * @return 파싱된 클레임을 포함하는 Claims 객체입니다.
      */
+
     public Claims parseToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key) // JWT 토큰을 검증하기 위한 서명 키 설정
                 .build()           // JwtParserBuilder 인스턴스를 JwtParser로 빌드
                 .parseClaimsJws(token) // 토큰을 파싱하여 Claims JWS 객체를 얻음
                 .getBody();            // Claims JWS 객체에서 Claims(클레임 세트)를 추출
     }
+
+
+    /**
+     * JWT 토큰에서 만료 날짜를 추출합니다.
+     *
+     * 이 메서드는 주어진 JWT 토큰에서 만료 시간을 파싱하여 Date 객체로 반환합니다.
+     * 만료 시간은 토큰이 더 이상 유효하지 않은 시점을 나타냅니다.
+     *
+     * @param token 만료 날짜를 추출하고자 하는 JWT 토큰 문자열입니다.
+     * @return 토큰의 만료 날짜를 나타내는 Date 객체입니다.
+     */
 
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
@@ -168,13 +178,16 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 JWT 액세스 토큰을 사용하여 인증(Authentication) 객체를 생성하여 반환합니다.
-     * 이 메서드는 JWT 토큰에서 추출한 권한 정보를 사용하여 Spring Security의 Authentication 객체를 생성합니다.
+     * JWT 토큰을 기반으로 인증 정보를 생성합니다.
      *
-     * @param accessToken JWT 액세스 토큰 문자열.
-     * @return 생성된 Authentication 객체.
-     * @throws InvalidTokenException 토큰이 유효하지 않거나 권한 정보가 없는 경우 발생할 수 있는 예외.
+     * 이 메서드는 주어진 액세스 토큰에서 사용자의 인증 정보를 추출하여 Authentication 객체를 생성합니다.
+     * 이 과정에서 사용자의 권한(역할)도 함께 추출하여 권한 정보를 설정합니다.
+     *
+     * @param accessToken 인증 정보를 추출하고자 하는 JWT 액세스 토큰입니다.
+     * @return 생성된 사용자 인증 정보를 나타내는 Authentication 객체입니다.
+     * @throws InvalidTokenException 권한 정보가 없거나 토큰 형식이 유효하지 않은 경우 예외를 발생시킵니다.
      */
+
     public Authentication getAuthentication(String accessToken) {
         // JWT 토큰을 해석하여 클레임(Claims) 객체를 추출합니다.
         Claims claims = parseClaims(accessToken);
@@ -207,12 +220,16 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 JWT 토큰의 유효성을 검증합니다.
+     * JWT 토큰의 유효성을 검증합니다.
      *
-     * @param token 검증할 JWT 토큰 문자열.
-     * @return 토큰이 유효한 경우 true, 그렇지 않은 경우 false 반환.
-     * @throws InvalidTokenException 유효하지 않은 토큰인 경우 발생할 수 있는 사용자 정의 예외.
+     * 이 메서드는 주어진 JWT 토큰이 유효한지 검증합니다. 토큰의 서명, 구조, 만료 시간 등을 검사합니다.
+     * 토큰이 모든 검증 조건을 통과하면 true를 반환합니다.
+     *
+     * @param token 검증하고자 하는 JWT 토큰 문자열입니다.
+     * @return 토큰의 유효성 검증 결과를 boolean 값으로 반환합니다. 유효한 경우 true를 반환합니다.
+     * @throws InvalidTokenException 토큰이 유효하지 않은 경우 예외를 발생시킵니다.
      */
+
     public boolean validateToken(String token) {
         try {
             // JWT 토큰을 검증하기 위한 파서를 생성합니다.
@@ -246,13 +263,15 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 주어진 JWT 토큰을 파싱하여 Claims 객체를 반환합니다.
-     * 이 메서드는 JWT 토큰의 유효성을 검증하고, 토큰 내부에 저장된 클레임(claim)들을 추출합니다.
+     * 주어진 액세스 토큰에서 클레임을 안전하게 파싱합니다.
      *
-     * @param accessToken 파싱할 JWT 토큰 문자열.
-     * @return 토큰에서 추출된 Claims 객체.
-     * @throws io.jsonwebtoken.JwtException 토큰이 유효하지 않거나 파싱 중 문제가 발생한 경우.
+     * 이 메서드는 JWT 토큰을 안전하게 해석하기 위해 예외 처리를 포함합니다.
+     * 토큰이 만료된 경우에도 만료된 토큰의 클레임을 반환할 수 있습니다.
+     *
+     * @param accessToken 클레임을 추출하고자 하는 JWT 액세스 토큰입니다.
+     * @return 추출된 클레임을 포함하는 Claims 객체입니다. 토큰이 만료된 경우 만료된 토큰의 클레임을 반환합니다.
      */
+
     private Claims parseClaims(String accessToken) {
         try {
             // JWT 토큰을 해석하기 위한 파서를 생성합니다.

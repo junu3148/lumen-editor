@@ -3,6 +3,7 @@ package com.lumeneditor.www.domain.auth;
 import com.lumeneditor.www.domain.auth.AuthRepository;
 import com.lumeneditor.www.web.dto.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -21,14 +22,17 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
-        // 데이터베이스에서 사용자 정보 조회
-        User user = authRepository.findByUserId(userId);
+        try {
+            User user = authRepository.findByUserId(userId);
 
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found with username: " + userId);
+            if (user == null) {
+                throw new UsernameNotFoundException("User not found with username: " + userId);
+            }
+
+            return createUserDetails(user);
+        } catch (DataAccessException e) {
+            throw e;
         }
-
-        return createUserDetails(user);
     }
 
 

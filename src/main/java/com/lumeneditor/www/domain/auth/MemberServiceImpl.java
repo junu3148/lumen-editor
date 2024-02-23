@@ -1,13 +1,10 @@
 package com.lumeneditor.www.domain.auth;
 
+import com.lumeneditor.www.comm.EmailUtils;
 import com.lumeneditor.www.security.JwtTokenProvider;
 import com.lumeneditor.www.web.dto.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Primary;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -15,26 +12,22 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberServiceImpl implements MemberService {
 
-    //private final AdminRepository adminRepository;
+
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
-    //private final TokenRepository tokenRepository;
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}");
+
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String INVALID_TOKEN_MESSAGE = "Invalid or expired refresh token";
     private static final String ERROR_PROCESSING_MESSAGE = "An error occurred while processing the refresh token";
-    private static final String INVALID_CREDENTIALS_MESSAGE = "인증에 실패하였습니다.";
-    private static final String INVALID_EMAIL_MESSAGE = "아이디는 이메일 형식이어야 합니다.";
+    private static final String INVALID_CREDENTIALS_MESSAGE = "Authentication failed.";
+    private static final String INVALID_EMAIL_MESSAGE = "The ID must be in the form of an email.";
 
 
     // 사용자 로그인을 처리하고, JWT 토큰을 생성하여 반환
@@ -44,7 +37,7 @@ public class MemberServiceImpl implements MemberService {
         String username = user.getUsername();
         String password = user.getPassword();
 
-        if (!isValidEmail(username)) {
+        if (!EmailUtils.isValidEmail(username)) {
             return badRequestJwtToken(); // 변경된 부분
         }
         try {
@@ -67,6 +60,7 @@ public class MemberServiceImpl implements MemberService {
         return authenticationManagerBuilder.getObject().authenticate(authenticationToken);
     }
 
+/*
 
     // JWT 토큰을 포함한 ResponseEntity를 생성
     private ResponseEntity<JwtToken> buildResponseWithToken(JwtToken jwtToken) {
@@ -75,6 +69,7 @@ public class MemberServiceImpl implements MemberService {
         return new ResponseEntity<>(jwtToken, httpHeaders, HttpStatus.OK);
     }
 
+*/
 
     // 잘못된 요청에 대한 응답을 생성하여 반환
     private JwtToken badRequestJwtToken() {
@@ -154,10 +149,5 @@ public class MemberServiceImpl implements MemberService {
 
     */
 
-    // 이메일 형식 체크
-    private boolean isValidEmail(String email) {
-        Matcher matcher = EMAIL_PATTERN.matcher(email);
-        return matcher.matches();
-    }
 
 }

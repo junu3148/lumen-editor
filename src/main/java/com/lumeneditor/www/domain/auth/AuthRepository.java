@@ -8,14 +8,23 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AuthRepository extends JpaRepository<User, Long> {
-
     // 기본 제공 메서드
     //User findByUserId(String userId);
 
     // @Query("SELECT u FROM User u WHERE u.userKey = :userKey") 전체 조회
     // @Query(value = "SELECT * FROM user WHERE user_id = :email", nativeQuery = true) 네이티비 쿼리작성
+
+
+
+    // 이메일 중복 체크
+    Long countByUserId(String userId);
+
+    // 로그인
     @Query("SELECT new com.lumeneditor.www.web.dto.User(u.userId, u.userPassword) FROM User u WHERE u.userId = :userId")
     User findByUserId(@Param("userId") String userId);
+
+
+
 
 
 }

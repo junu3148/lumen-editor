@@ -1,7 +1,7 @@
 package com.lumeneditor.www.web.dto;
 
-import com.lumeneditor.www.domain.auth.eunm.Gender;
-import com.lumeneditor.www.domain.auth.eunm.YesNo;
+import com.lumeneditor.www.comm.eunm.Gender;
+import com.lumeneditor.www.comm.eunm.YesNo;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;

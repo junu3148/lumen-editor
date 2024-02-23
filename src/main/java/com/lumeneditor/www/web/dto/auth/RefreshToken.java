@@ -15,6 +15,6 @@ import java.util.Date;
 public class RefreshToken {
     private String username;  // 사용자 이름 또는 ID
     private int role;
-    private String refreshToken;     // 리프레시 토큰 값
+    private String token;     // 리프레시 토큰 값
     private Date expiryDate;  // 토큰의 만료 시간
 }

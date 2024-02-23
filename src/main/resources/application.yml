@@ -10,6 +10,27 @@ server:
 
 # Spring 설정
 spring:
+
+  # 자동 재실행
+  main:
+    allow-bean-definition-overriding: true
+
+  # email
+  mail:
+    host: smtp.gmail.com # 1
+    port: 587 # 2
+    username: ${mail.username} # 3
+    password: ${mail.password} # 4
+    properties:
+      mail:
+        smtp:
+          auth: true # 5
+          timeout: 5000 # 6
+          starttls:
+            enable: true # 7
+        mime:
+          charset: UTF-8
+  # Redis
   data:
     redis:
       host: localhost
@@ -20,9 +41,6 @@ spring:
           max-idle: 8
           min-idle: 0
 
-  main:
-    allow-bean-definition-overriding: true
-
   # MySQL 설정
   datasource:
     url: jdbc:mysql://localhost:3306/LUMEN?serverTimezone=UTC&characterEncoding=UTF-8
@@ -30,6 +48,7 @@ spring:
     password: VIKING
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  # jpa
   jpa:
     show-sql: true
     hibernate:
