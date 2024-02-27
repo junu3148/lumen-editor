@@ -26,5 +26,8 @@ public interface AccountService {
 
     ResponseEntity<Boolean> updateUserPassword(HttpServletRequest request, User user);
 
+    ResponseEntity<Boolean> updateUserDetails(HttpServletRequest request, User user);
+
+
 }
 

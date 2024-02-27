@@ -23,7 +23,7 @@ public class AccountController {
     // 유저정보 비밀번호 수정
     @PatchMapping("user")
     public ResponseEntity<Boolean> updateUserPassword(HttpServletRequest request, @RequestBody User user) {
-        return accountService.updateUserPassword(request, user);
+        return accountService.updateUserDetails(request, user);
     }
 
 

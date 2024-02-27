@@ -42,19 +42,21 @@ public class AuthController {
     // 로그인
     @PostMapping("login")
     public ResponseEntity<JwtToken> login(@RequestBody User user, HttpServletResponse response) {
-
         JwtToken jwtToken = memberService.signInAndGenerateJwtToken(user);
 
-        // 쿠키 생성 및 설정
-        Cookie cookie = new Cookie("accessToken", jwtToken.getAccessToken());
-        cookie.setHttpOnly(true);
-        cookie.setPath("/");
-        // 필요하다면 쿠키의 만료 시간도 설정할 수 있습니다. 예: cookie.setMaxAge(60 * 60 * 24); // 하루
-        response.addCookie(cookie);
+        // accessToken이 존재할 경우에만 쿠키 생성 및 설정
+        if (jwtToken != null && jwtToken.getAccessToken() != null && !jwtToken.getAccessToken().isEmpty()) {
+            Cookie cookie = new Cookie("accessToken", jwtToken.getAccessToken());
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            // 필요하다면 쿠키의 만료 시간도 설정할 수 있습니다. 예: cookie.setMaxAge(60 * 60 * 24); // 하루
+            response.addCookie(cookie);
+        }
 
-        // 쿠키를 포함한 응답 반환
+        // JWT 토큰을 포함한 응답 반환
         return ResponseEntity.ok().body(jwtToken);
     }
+
 
 
     // 로그아웃

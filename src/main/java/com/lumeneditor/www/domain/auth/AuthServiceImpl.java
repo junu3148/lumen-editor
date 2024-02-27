@@ -1,6 +1,7 @@
 package com.lumeneditor.www.domain.auth;
 
 import com.lumeneditor.www.comm.EmailUtils;
+import com.lumeneditor.www.comm.PasswordUtil;
 import com.lumeneditor.www.domain.auth.email.EmailAuthRepository;
 import com.lumeneditor.www.domain.auth.email.EmailService;
 import com.lumeneditor.www.exception.InvalidTokenException;
@@ -30,7 +31,6 @@ public class AuthServiceImpl implements AuthService {
     private final AuthRepository authRepository;
     private final EmailAuthRepository emailAuthRepository;
     private final EmailService emailService;
-    private final PasswordEncoder passwordEncoder;
 
     // 이메일 중복 체크
     @Override
@@ -62,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
                 emailAuthRepository.save(emailAuth);
 
                 // 이메일 발송
-                emailService.sendAuthenticationCodeEmail(emailAuth.getAuthEmail(),emailAuth.getAuthCode());
+                emailService.sendAuthenticationCodeEmail(emailAuth.getAuthEmail(), emailAuth.getAuthCode());
 
                 // 사용 가능한 경우
                 return ResponseEntity.ok(true); // 중복되지 않았으므로 true 반환
@@ -77,7 +77,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-
     // 회원가입 인증번호 확인
     @Override
     @Transactional
@@ -87,13 +86,7 @@ public class AuthServiceImpl implements AuthService {
         Optional<EmailAuth> result = emailAuthRepository.findByAuthCodeAndAuthEmail(emailAuth.getAuthCode(), emailAuth.getAuthEmail());
 
         // 결과가 존재하는지 확인
-        if (result.isPresent()) {
-            // 결과가 있으면 true 반환
-            return ResponseEntity.ok(true);
-        } else {
-            // 결과가 없으면 false 반환
-            return ResponseEntity.ok(false);
-        }
+        return result.isPresent() ? ResponseEntity.ok(true) : ResponseEntity.ok(false);
     }
 
     // 회원가입
@@ -103,8 +96,7 @@ public class AuthServiceImpl implements AuthService {
         try {
 
             // 사용자 비밀번호 인코딩
-            String encodedPassword = passwordEncoder.encode(user.getUserPassword());
-            user.setUserPassword(encodedPassword);
+            PasswordUtil.encodeAndSetPassword(user);
 
             authRepository.save(user);
             return ResponseEntity.ok(true); // 성공적으로 저장되었을 때 true 반환
