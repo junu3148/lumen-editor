@@ -1,7 +1,6 @@
 package com.lumeneditor.www.domain.auth;
 
-import com.lumeneditor.www.domain.auth.AuthRepository;
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.GrantedAuthority;

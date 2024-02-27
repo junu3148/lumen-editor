@@ -1,6 +1,6 @@
 package com.lumeneditor.www.domain.auth;
 
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +20,7 @@ public interface AuthRepository extends JpaRepository<User, Long> {
     Long countByUserId(String userId);
 
     // 로그인
-    @Query("SELECT new com.lumeneditor.www.web.dto.User(u.userId, u.userPassword) FROM User u WHERE u.userId = :userId")
+    @Query("SELECT new com.lumeneditor.www.domain.auth.entity.User(u.userId, u.userPassword) FROM User u WHERE u.userId = :userId")
     User findByUserId(@Param("userId") String userId);
 
 

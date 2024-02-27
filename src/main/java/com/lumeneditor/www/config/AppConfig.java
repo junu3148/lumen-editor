@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @ComponentScan(basePackages = "com.lumeneditor.www")
@@ -23,13 +24,14 @@ public class AppConfig {
     private final RedisTemplate<String, String> redisTemplate;
     private final JavaMailSender javaMailSender;
 
+
     // JWT Key
     @Value("${jwt.secret}")
     private String secretKey;
 
     // MemberService 빈 정의
     @Bean
-    public MemberService memberService(AuthenticationManagerBuilder authManagerBuilder, JwtTokenProvider jwtTokenProvider) {
+    public MemberService memberService(AuthenticationManagerBuilder authManagerBuilder) {
         return new MemberServiceImpl(authManagerBuilder, jwtTokenProvider());
     }
 
@@ -41,8 +43,8 @@ public class AppConfig {
 
     // AuthService 빈 정의
     @Bean
-    public AuthService authService(JwtTokenProvider jwtTokenProvider, AuthRepository authRepository, EmailAuthRepository emailAuthRepository, EmailService emailService) {
-        return new AuthServiceImpl(redisTemplate, jwtTokenProvider, authRepository, emailAuthRepository, emailService);
+    public AuthService authService(AuthRepository authRepository, EmailAuthRepository emailAuthRepository, PasswordEncoder passwordEncoder) {
+        return new AuthServiceImpl(redisTemplate, jwtTokenProvider(), authRepository, emailAuthRepository, emailService(), passwordEncoder);
     }
 
     // EmailService 빈 정의

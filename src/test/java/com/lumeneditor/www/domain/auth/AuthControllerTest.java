@@ -1,7 +1,7 @@
 package com.lumeneditor.www.domain.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

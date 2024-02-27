@@ -2,7 +2,7 @@ package com.lumeneditor.www.domain.auth;
 
 import com.lumeneditor.www.comm.EmailUtils;
 import com.lumeneditor.www.security.JwtTokenProvider;
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

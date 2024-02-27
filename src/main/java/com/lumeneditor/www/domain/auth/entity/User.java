@@ -1,4 +1,4 @@
-package com.lumeneditor.www.web.dto;
+package com.lumeneditor.www.domain.auth.entity;
 
 import com.lumeneditor.www.comm.eunm.Gender;
 import com.lumeneditor.www.comm.eunm.YesNo;
@@ -33,48 +33,58 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userKey;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String userId;
 
+    @Column(nullable = false)
     private String userPassword;
+
+    @Column(nullable = false)
     private String userName;
+
     private String phoneNumber;
 
-    @Temporal(TemporalType.DATE) // 날짜 타입으로 지정
+    @Column(nullable = false)
+    @Temporal(TemporalType.DATE)
     private Date accessionDate;
 
-    @Temporal(TemporalType.DATE) // 날짜 타입으로 지정
+    @Temporal(TemporalType.DATE)
     private Date withdrawalDate;
 
-    private Integer birthYear; // 필드 타입을 기본형에서 래퍼 클래스로 변경
+    private Integer birthYear;
     private String occupation;
     private String country;
 
-    @Enumerated(EnumType.STRING) // enum 타입을 문자열로 저장
-    private Gender gender; // Gender enum 타입 사용
+    @Enumerated(EnumType.STRING)
+    private Gender gender = Gender.M; // 예시 기본값 설정
 
     @Enumerated(EnumType.STRING)
-    private YesNo emailAccept; // YesNo enum 타입 사용
+    private YesNo emailAccept = YesNo.N; // 기본값 설정
 
     @Enumerated(EnumType.STRING)
-    private YesNo promoAccept;
+    private YesNo promoAccept = YesNo.N; // 기본값 설정
 
     @Enumerated(EnumType.STRING)
-    private YesNo userStatus;
+    private YesNo userStatus = YesNo.Y; // 기본값 설정
 
-    private Integer outInfo;
-    private Integer subRound;
+    private Integer outInfo = 0;
+    private Integer subRound = 0;
     private String company;
-    private Integer isDeleted; // 필드 타입 변경
+    private Integer isDeleted = 0;
     private String logoImage;
 
     private Long planKey;
 
     @Temporal(TemporalType.DATE)
-    private Date passwordRecovery; // password_recovery 필드 추가
+    private Date passwordRecovery;
 
-    // 단일 권한 필드로 변경
     private String role;
+
+    @PrePersist
+    protected void onCreate() {
+        accessionDate = new Date();
+        passwordRecovery = new Date();
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -109,6 +119,10 @@ public class User implements UserDetails {
     @Override
     public String getPassword() {
         return userPassword;
+    }
+
+    public String getUserName() {
+        return userName;
     }
 
     @Override

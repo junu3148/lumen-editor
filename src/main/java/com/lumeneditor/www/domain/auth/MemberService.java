@@ -1,9 +1,7 @@
 package com.lumeneditor.www.domain.auth;
 
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
-import org.springframework.http.ResponseEntity;
-
 
 
 public interface MemberService {

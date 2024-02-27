@@ -1,7 +1,8 @@
 package com.lumeneditor.www.domain.auth;
 
 import com.lumeneditor.www.comm.JwtTokenUtil;
-import com.lumeneditor.www.web.dto.User;
+import com.lumeneditor.www.domain.auth.entity.EmailAuth;
+import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,8 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -22,22 +21,22 @@ public class AuthController {
 
 
     // 이메일 중복 체크
-    @PostMapping("idCheck")
+    @PostMapping("send-auth-code")
     public ResponseEntity<Boolean> checkEmailDuplication(@RequestBody User user) {
         return authService.checkEmailDuplication(user);
     }
 
-    // 회원 가입
-    @PostMapping("signup")
-    public ResponseEntity<String> signUp(@RequestBody User user) {
-
-
-
-
-    return null;
+    // 회원가입 인증번호 확인
+    @PostMapping("verify")
+    public ResponseEntity<Boolean> verify(@RequestBody EmailAuth emailAuth) {
+        return authService.verifyAuthenticationCode(emailAuth);
     }
 
-
+    // 회원 가입
+    @PostMapping("signup")
+    public ResponseEntity<Boolean> signUp(@RequestBody User user) {
+        return authService.signUp(user);
+    }
 
 
     // 로그인

@@ -1,4 +1,4 @@
-package com.lumeneditor.www.web.dto;
+package com.lumeneditor.www.domain.auth.entity;
 
 
 import com.lumeneditor.www.comm.eunm.YesNo;
