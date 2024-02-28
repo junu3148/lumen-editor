@@ -57,7 +57,31 @@ public class AuthController {
         return ResponseEntity.ok().body(jwtToken);
     }
 
+    // accessToken 재발급
+    @PostMapping("access-token")
+    ResponseEntity<JwtToken> getAccessToken(HttpServletRequest request, HttpServletResponse response) {
 
+        JwtToken jwtToken = memberService.getAccessToken(request);
+        System.out.println(jwtToken);
+
+        // 기존의 accessToken 쿠키 삭제
+        Cookie deleteCookie = new Cookie("accessToken", null); // 쿠키 이름과 null 값을 설정
+        deleteCookie.setMaxAge(0); // 쿠키의 만료 시간을 0으로 설정하여 즉시 만료
+        deleteCookie.setPath("/"); // 쿠키 경로 설정
+        response.addCookie(deleteCookie); // 응답에 쿠키 추가하여 클라이언트에 전송
+
+        // 새로운 accessToken 쿠키 생성 및 설정
+        if (jwtToken != null && jwtToken.getAccessToken() != null && !jwtToken.getAccessToken().isEmpty()) {
+            Cookie newCookie = new Cookie("accessToken", jwtToken.getAccessToken());
+            newCookie.setHttpOnly(true);
+            newCookie.setPath("/");
+            // 필요하다면 쿠키의 만료 시간도 설정할 수 있습니다. 예: newCookie.setMaxAge(60 * 60 * 24); // 하루
+            response.addCookie(newCookie);
+        }
+
+        // JWT 토큰을 포함한 응답 반환
+        return ResponseEntity.ok().body(jwtToken);
+    }
 
     // 로그아웃
     @PostMapping("logout")
@@ -81,6 +105,8 @@ public class AuthController {
         // 응답 반환
         return ResponseEntity.noContent().build();
     }
+
+
 
 
 }

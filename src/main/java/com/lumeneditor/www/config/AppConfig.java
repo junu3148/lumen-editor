@@ -35,8 +35,8 @@ public class AppConfig {
 
     // MemberService 빈 정의
     @Bean
-    public MemberService memberService(AuthenticationManagerBuilder authManagerBuilder) {
-        return new MemberServiceImpl(authManagerBuilder, jwtTokenProvider());
+    public MemberService memberService(AuthenticationManagerBuilder authManagerBuilder, AuthRepository authRepository) {
+        return new MemberServiceImpl(authManagerBuilder, jwtTokenProvider(), redisTemplate, authRepository);
     }
 
     // JwtTokenProvider 빈 정의
@@ -47,7 +47,7 @@ public class AppConfig {
 
     // AuthService 빈 정의
     @Bean
-    public AuthService authService(AuthRepository authRepository, EmailAuthRepository emailAuthRepository ) {
+    public AuthService authService(AuthRepository authRepository, EmailAuthRepository emailAuthRepository) {
         return new AuthServiceImpl(redisTemplate, jwtTokenProvider(), authRepository, emailAuthRepository, emailService());
     }
 

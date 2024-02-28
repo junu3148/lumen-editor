@@ -24,9 +24,10 @@ import java.util.List;
 @AllArgsConstructor
 public class User implements UserDetails {
 
-    public User(String userId, String userPassword) {
+    public User(String userId, String userPassword,String role) {
         this.userId = userId;
         this.userPassword = userPassword;
+        this.role = role;
     }
 
     @Id
@@ -56,21 +57,21 @@ public class User implements UserDetails {
     private String country;
 
     @Enumerated(EnumType.STRING)
-    private Gender gender = Gender.M; // 예시 기본값 설정
+    private Gender gender;
 
     @Enumerated(EnumType.STRING)
-    private YesNo emailAccept = YesNo.N; // 기본값 설정
+    private YesNo emailAccept;
 
     @Enumerated(EnumType.STRING)
-    private YesNo promoAccept = YesNo.N; // 기본값 설정
+    private YesNo promoAccept;
 
     @Enumerated(EnumType.STRING)
-    private YesNo userStatus = YesNo.Y; // 기본값 설정
+    private YesNo userStatus;
 
-    private Integer outInfo = 0;
-    private Integer subRound = 0;
+    private Integer outInfo;
+    private Integer subRound;
     private String company;
-    private Integer isDeleted = 0;
+    private Integer isDeleted;
     private String logoImage;
 
     private Long planKey;
@@ -83,7 +84,21 @@ public class User implements UserDetails {
     @PrePersist
     protected void onCreate() {
         accessionDate = new Date();
+        emailAccept = YesNo.N;
+        promoAccept = YesNo.N;
+        userStatus = YesNo.Y;
+        outInfo = 0;
+        subRound = 0;
+        isDeleted = 0;
         passwordRecovery = new Date();
+        planKey = 1L;
+        role = "User";
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        withdrawalDate = new Date(); // 탈퇴시
+        passwordRecovery = new Date(); // 비밀번호 변경시
     }
 
     @Override

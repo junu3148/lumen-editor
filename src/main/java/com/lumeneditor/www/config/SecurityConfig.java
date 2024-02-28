@@ -1,5 +1,6 @@
 package com.lumeneditor.www.config;
 
+import com.lumeneditor.www.comm.PasswordUtil;
 import com.lumeneditor.www.exception.JwtAccessDeniedHandler;
 import com.lumeneditor.www.exception.JwtAuthenticationEntryPoint;
 import com.lumeneditor.www.security.JwtAuthenticationFilter;
@@ -54,7 +55,7 @@ public class SecurityConfig {
     /**
      * Spring Security 필터 체인을 구성합니다.
      * 이 메서드는 애플리케이션의 보안 요구 사항에 따라 HTTP 보안 설정을 정의합니다.
-     *
+     * <p>
      * 설정 내용:
      * - HTTP 기본 인증을 비활성화하여, 사용자 인증을 위해 자체 구현한 방식을 사용합니다.
      * - CSRF 보호 기능을 비활성화하여, REST API가 상태가 없는(stateless) 특성을 유지할 수 있도록 합니다.
@@ -87,7 +88,7 @@ public class SecurityConfig {
         // HTTP 요청 권한 부여 설정
         http.authorizeHttpRequests((authz) -> authz
                 // "/auth/login" 엔드포인트에 대한 접근은 모든 사용자에게 허용
-                .requestMatchers("/auth/login").permitAll()
+                .requestMatchers("/auth/login", "/auth/signup", "/auth/send-auth-code", "auth/verify", "auth/access-token").permitAll()
                 // "/" 루트 경로에 대한 접근은 모든 사용자에게 허용
                 .requestMatchers("/").permitAll()
                 // 나머지 모든 요청에 대한 접근은 인증된 사용자에게만 허용
@@ -105,7 +106,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 
 
 }

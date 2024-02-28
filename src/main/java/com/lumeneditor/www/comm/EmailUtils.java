@@ -6,11 +6,15 @@ import java.util.regex.Pattern;
 
 public class EmailUtils {
 
+    private EmailUtils() {
+
+    }
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-
     private static final int CODE_LENGTH = 6; // 인증번호 길이 상수로 정의
     private static final int RANDOM_BOUND = 10; // 0부터 9까지의 랜덤 숫자 생성을 위한 상한값
+
+    // 이메일 유효성 검사
     public static boolean isValidEmail(String email) {
 
         if (email == null) return false;
@@ -29,4 +33,5 @@ public class EmailUtils {
         }
         return builder.toString(); // 생성된 인증번호 반환
     }
+    
 }

@@ -1,10 +1,13 @@
 package com.lumeneditor.www.domain.auth;
 
 import com.lumeneditor.www.comm.EmailUtils;
+import com.lumeneditor.www.comm.JwtTokenUtil;
 import com.lumeneditor.www.security.JwtTokenProvider;
 import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -21,11 +24,9 @@ public class MemberServiceImpl implements MemberService {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final AuthRepository authRepository;
 
-    private static final String AUTHORIZATION_HEADER = "Authorization";
-    private static final String BEARER_PREFIX = "Bearer ";
-    private static final String INVALID_TOKEN_MESSAGE = "Invalid or expired refresh token";
-    private static final String ERROR_PROCESSING_MESSAGE = "An error occurred while processing the refresh token";
     private static final String INVALID_CREDENTIALS_MESSAGE = "Authentication failed.";
     private static final String INVALID_EMAIL_MESSAGE = "The ID must be in the form of an email.";
 
@@ -43,7 +44,7 @@ public class MemberServiceImpl implements MemberService {
         try {
             return authenticateAndGenerateToken(username, password);
         } catch (AuthenticationException e) {
-            return unauthorizedJwtToken(INVALID_CREDENTIALS_MESSAGE); // 변경된 부분
+            return unauthorizedJwtToken(); // 변경된 부분
         }
     }
 
@@ -60,17 +61,6 @@ public class MemberServiceImpl implements MemberService {
         return authenticationManagerBuilder.getObject().authenticate(authenticationToken);
     }
 
-/*
-
-    // JWT 토큰을 포함한 ResponseEntity를 생성
-    private ResponseEntity<JwtToken> buildResponseWithToken(JwtToken jwtToken) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(AUTHORIZATION_HEADER, BEARER_PREFIX + jwtToken.getAccessToken());
-        return new ResponseEntity<>(jwtToken, httpHeaders, HttpStatus.OK);
-    }
-
-*/
-
     // 잘못된 요청에 대한 응답을 생성하여 반환
     private JwtToken badRequestJwtToken() {
         JwtToken errorToken = new JwtToken();
@@ -79,75 +69,33 @@ public class MemberServiceImpl implements MemberService {
     }
 
     // 인증되지 않은 요청에 대한 응답을 생성하여 반환
-    private JwtToken unauthorizedJwtToken(String message) {
+    private JwtToken unauthorizedJwtToken() {
         JwtToken errorToken = new JwtToken();
-        errorToken.setErrorMessage(message);
+        errorToken.setErrorMessage(MemberServiceImpl.INVALID_CREDENTIALS_MESSAGE);
         return errorToken; // JwtToken 객체를 직접 반환
     }
 
 
-/*
-
     // 리프레시 토큰의 유효성을 검사한 후, 새로운 액세스 토큰을 발행
     @Override
     @Transactional
-    public ResponseEntity<String> refreshTokenCK(String refreshToken) {
+    public JwtToken getAccessToken(HttpServletRequest request) {
+        String accessToken = JwtTokenUtil.extractTokenFromCookies(request);
+        String userId = jwtTokenProvider.getAdminUserInfoFromToken(accessToken);
+        String refreshToken = redisTemplate.opsForValue().get(userId);
 
-        try {
-            if (!isValidRefreshToken(refreshToken)) {
-                return unauthorizedStringResponse(INVALID_TOKEN_MESSAGE);
-            } else {
 
-                Optional<RefreshToken> refreshTokenOpt = tokenRepository.refreshTokenCk(refreshToken);
-                if (refreshTokenOpt.isPresent()) {
-                    // 토큰이 존재하는 경우, 새로운 액세스 토큰을 생성
-                    String newAccessToken = createNewAccessToken(refreshToken);
-                    return buildResponseWithToken(newAccessToken);
-                }
-            }
-        } catch (Exception e) {
-            return internalServerErrorResponse();
+        if (refreshToken != null) {
+            // 토큰이 유효한 경우, 새로운 액세스 토큰 생성
+            User user = authRepository.findByUserId(userId);
+            String newAccessToken = jwtTokenProvider.generateAccessToken(user);
+            JwtToken jwtToken = new JwtToken();
+            jwtToken.setAccessToken(newAccessToken);
+            return jwtToken;
         }
-        // 토큰이 유효하지 않거나 조회되지 않는 경우, 적절한 응답 반환
-        return unauthorizedStringResponse(INVALID_TOKEN_MESSAGE);
+        return null;
+
     }
-
-    // 제공된 리프레시 토큰이 유효한지 검사
-    private boolean isValidRefreshToken(String refreshToken) {
-        return refreshToken != null && jwtTokenProvider.validateToken(refreshToken)
-                && tokenRepository.refreshTokenCK(refreshToken).isPresent();
-    }
-   // 제공된 리프레시 토큰을 사용하여 새로운 액세스 토큰을 생성
-    private String createNewAccessToken(String refreshToken) {
-        Optional<RefreshToken> tokenData = tokenRepository.refreshTokenCK(refreshToken);
-        return jwtTokenProvider.generateAccessToken(tokenData);
-    }
-
-    // 토큰을 사용하여 JWT 토큰을 포함한 ResponseEntity를 생성
-    private ResponseEntity<String> buildResponseWithToken(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(AUTHORIZATION_HEADER, BEARER_PREFIX + token);
-
-        // 토큰 정보를 JSON 문자열 형태로 만들기
-        // 실제 환경에서는 객체를 JSON으로 변환할 라이브러리를 사용하겠지만 여기서는 수동으로 구성
-        String responseBody = "{\"accessToken\":\"" + token + "\"}";
-
-        return new ResponseEntity<>(responseBody, headers, HttpStatus.OK);
-    }
-
-        // 인증되지 않은 요청에 대한 문자열 응답을 생성하여 반환
-    private ResponseEntity<String> unauthorizedStringResponse(String message) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(message);
-    }
-
-    // 내부 서버 오류에 대한 응답을 생성하여 반환
-    private ResponseEntity<String> internalServerErrorResponse() {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ERROR_PROCESSING_MESSAGE);
-    }
-
-
-
-    */
 
 
 }

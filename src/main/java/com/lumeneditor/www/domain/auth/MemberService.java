@@ -2,6 +2,8 @@ package com.lumeneditor.www.domain.auth;
 
 import com.lumeneditor.www.domain.auth.entity.User;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.ResponseEntity;
 
 
 public interface MemberService {
@@ -27,13 +29,13 @@ public interface MemberService {
      * 새로운 JWT 액세스 토큰을 생성하고 이를 {@code ResponseEntity<String>} 형태로 감싸서 반환합니다.
      * 리프레시 토큰이 유효하지 않거나 만료된 경우, 적절한 오류 메시지와 함께 오류 응답이 반환됩니다.
      *
-     * @param refreshToken 검증하고 새로운 JWT 액세스 토큰을 생성하기 위한 리프레시 토큰 문자열.
+     * @param request 검증하고 새로운 JWT 액세스 토큰을 생성하기 위한 리프레시 토큰 문자열.
      * @return 생성된 새로운 JWT 액세스 토큰을 담고 있는 {@code ResponseEntity<String>} 객체. 리프레시 토큰이
      * 유효한 경우, {@code HttpStatus.OK} 상태와 함께 새 토큰이 반환되며, 실패한 경우 적절한 HTTP 오류 상태와
      * 오류 메시지가 반환됩니다.
      */
 
-   //ResponseEntity<String> refreshTokenCK(String refreshToken);
+    JwtToken getAccessToken(HttpServletRequest request);
 
 
 }

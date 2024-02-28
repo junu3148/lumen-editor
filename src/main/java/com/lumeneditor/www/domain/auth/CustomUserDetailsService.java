@@ -4,6 +4,7 @@ import com.lumeneditor.www.domain.auth.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,6 +40,8 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserDetails createUserDetails(User user) {
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
         // int 타입의 role을 String으로 변환
+        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
