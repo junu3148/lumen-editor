@@ -9,13 +9,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth/")
 public class AuthController {
 
+
+    private static final String ACCESS_TOKEN = "accessToken";
     private final MemberService memberService;
     private final AuthService authService;
 
@@ -38,8 +43,57 @@ public class AuthController {
         return authService.signUp(user);
     }
 
-
     // 로그인
+    @PostMapping("login")
+    public ResponseEntity<JwtToken> login(@RequestBody User user, HttpServletResponse response) {
+        JwtToken jwtToken = memberService.signInAndGenerateJwtToken(user);
+        if (jwtToken != null && jwtToken.getAccessToken() != null && !jwtToken.getAccessToken().isEmpty()) {
+            addCookie(response, ACCESS_TOKEN, jwtToken.getAccessToken(), 60 * 60 * 24); // 하루 동안 유효한 쿠키 설정
+        }
+        return ResponseEntity.ok().body(jwtToken);
+    }
+
+    // accessToken 재발급
+    @PostMapping("access-token")
+    ResponseEntity<JwtToken> getAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        JwtToken jwtToken = memberService.getAccessToken(request);
+        deleteCookie(response, ACCESS_TOKEN); // 기존 쿠키 삭제
+        if (jwtToken != null && jwtToken.getAccessToken() != null && !jwtToken.getAccessToken().isEmpty()) {
+            addCookie(response, ACCESS_TOKEN, jwtToken.getAccessToken(), 60 * 60 * 24); // 새 쿠키 추가
+        }
+        return ResponseEntity.ok().body(jwtToken);
+    }
+
+    // 로그아웃
+    @PostMapping("logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        String accessToken = JwtTokenUtil.extractTokenFromCookies(request);
+        if (accessToken != null && !accessToken.isEmpty()) {
+            deleteCookie(response, ACCESS_TOKEN); // 쿠키 삭제
+            authService.logout(accessToken); // 로그아웃 처리
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+
+
+    // 쿠키 추가 및 설정 메서드
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge); // 쿠키 만료 시간 설정. 0이면 즉시 만료, 양수면 해당 초만큼 유지
+        response.addCookie(cookie);
+    }
+
+    // 쿠키 삭제 메서드
+    private void deleteCookie(HttpServletResponse response, String name) {
+        addCookie(response, name, null, 0); // 쿠키 만료 시간을 0으로 설정하여 삭제
+    }
+
+
+
+/*   // 로그인
     @PostMapping("login")
     public ResponseEntity<JwtToken> login(@RequestBody User user, HttpServletResponse response) {
         JwtToken jwtToken = memberService.signInAndGenerateJwtToken(user);
@@ -62,7 +116,6 @@ public class AuthController {
     ResponseEntity<JwtToken> getAccessToken(HttpServletRequest request, HttpServletResponse response) {
 
         JwtToken jwtToken = memberService.getAccessToken(request);
-        System.out.println(jwtToken);
 
         // 기존의 accessToken 쿠키 삭제
         Cookie deleteCookie = new Cookie("accessToken", null); // 쿠키 이름과 null 값을 설정
@@ -104,8 +157,7 @@ public class AuthController {
 
         // 응답 반환
         return ResponseEntity.noContent().build();
-    }
-
+    }*/
 
 
 

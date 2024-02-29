@@ -31,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
             return createUserDetails(user);
         } catch (DataAccessException e) {
-            throw e;
+            throw new UsernameNotFoundException("An error occurred while fetching user details for username: " + userId, e);
         }
     }
 

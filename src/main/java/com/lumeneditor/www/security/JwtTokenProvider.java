@@ -1,5 +1,6 @@
 package com.lumeneditor.www.security;
 
+import com.lumeneditor.www.exception.CustomException;
 import com.lumeneditor.www.exception.CustomExpiredJwtException;
 import com.lumeneditor.www.exception.InvalidTokenException;
 import com.lumeneditor.www.web.dto.auth.JwtToken;
@@ -26,8 +27,8 @@ public class JwtTokenProvider {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final Key key;
-    private final long ACCESS_TOKEN_EXPIRE_COUNT = 60 * 1000L; // 30분
-    private final long REFRESH_TOKEN_EXPIRE_COUNT = 8 * 60 * 60 * 1000L; // 8시간
+    private static final long ACCESS_TOKEN_EXPIRE_COUNT = 30 * 60 * 1000L; // 30분
+    private static final long REFRESH_TOKEN_EXPIRE_COUNT = 8 * 60 * 60 * 1000L; // 8시간
     private static final String TOKEN_TYPE = "JWT";
     private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
     private static final String CLAIM_ADMIN_USER_ID = "sub";
@@ -100,7 +101,16 @@ public class JwtTokenProvider {
     }
 
 
-    // 수정 쿠키에서 빼서 확인하는걸로
+    /**
+     * 사용자 정보를 기반으로 JWT 액세스 토큰을 생성합니다.
+     * <p>
+     * 이 메서드는 현재 시간을 기준으로 설정된 유효 시간을 더해 액세스 토큰의 만료 시간을 계산합니다.
+     * 생성된 토큰에는 사용자 ID를 주제(subject)로, 사용자의 역할을 권한(claim)으로 포함하여 구성됩니다.
+     * 이를 통해 생성된 JWT 토큰은 HTTP 요청에 포함되어 서버로 전송될 때, 사용자의 인증 및 권한 확인에 사용됩니다.
+     * <p>
+     * @param user 액세스 토큰을 생성하기 위한 사용자 정보가 담긴 User 객체입니다.
+     * @return 생성된 JWT 액세스 토큰 문자열을 반환합니다.
+     */
     public String generateAccessToken(com.lumeneditor.www.domain.auth.entity.User user) {
 
 
@@ -117,6 +127,17 @@ public class JwtTokenProvider {
                 .compact();
     }
 
+
+    /**
+     * JWT 토큰에서 관리자 사용자 정보를 추출합니다.
+     * <p>
+     * 이 메서드는 주어진 JWT 토큰을 파싱하여 클레임을 추출하고, 클레임에서 관리자 사용자의 ID를 반환합니다.
+     * 토큰이 유효하고 관리자 사용자 ID가 포함되어 있는 경우, 해당 ID를 문자열로 반환합니다.
+     * 만약 토큰 파싱 과정에서 문제가 발생하거나, 관리자 사용자 ID 클레임이 존재하지 않는 경우, null을 반환합니다.
+     * <p>
+     * @param token 사용자 인증 정보를 포함하고 있는 JWT 토큰 문자열입니다.
+     * @return 추출된 관리자 사용자 ID 문자열, 또는 클레임이 존재하지 않는 경우 null입니다.
+     */
 
     public String getAdminUserInfoFromToken(String token) {
         Claims claims = parseClaims(token);
@@ -143,7 +164,7 @@ public class JwtTokenProvider {
         Claims claims = parseClaims(accessToken);
 
         // 권한 정보가 없는 경우 예외를 발생시킵니다.
-        if (claims.get(CLAIM_IS_ADMIN) == null) {
+        if (Objects.requireNonNull(claims).get(CLAIM_IS_ADMIN) == null) {
             throw new InvalidTokenException("권한 정보가 없는 토큰입니다.");
         }
 
@@ -155,6 +176,16 @@ public class JwtTokenProvider {
         UserDetails principal = new User(claims.getSubject(), "", authorities);
         return new UsernamePasswordAuthenticationToken(principal, "", authorities);
     }
+
+    /**
+     * 문자열로 주어진 권한 정보를 Spring Security의 GrantedAuthority 객체 컬렉션으로 변환합니다.
+     * <p>
+     * 입력된 권한 정보 문자열이 비어있는 경우, 기본 권한 'ROLE_DEFAULT'를 포함하는 컬렉션을 반환합니다.
+     * 그렇지 않으면, 권한 정보를 쉼표로 분리하여 각 권한을 GrantedAuthority 객체로 변환하고, 이를 컬렉션에 추가합니다.
+     *
+     * @param rolesStr 쉼표로 구분된 권한 정보 문자열입니다.
+     * @return 변환된 GrantedAuthority 객체의 컬렉션입니다.
+     */
 
     private static Collection<? extends GrantedAuthority> getGrantedAuthorities(String rolesStr) {
         Collection<? extends GrantedAuthority> authorities;
@@ -174,6 +205,19 @@ public class JwtTokenProvider {
         return authorities;
     }
 
+    /**
+     * 주어진 JWT 토큰을 파싱하고 유효성을 검사합니다.
+     * <p>
+     * 이 메서드는 JWT 토큰을 파싱하여 클레임을 추출합니다. allowExpired 매개변수에 따라 만료된 토큰의 처리 방식을 결정합니다.
+     * 만료된 토큰을 허용하는 경우, 해당 토큰의 클레임을 반환합니다. 그렇지 않으면 CustomExpiredJwtException 예외를 발생시킵니다.
+     * 유효하지 않은 토큰 형식이나 지원되지 않는 토큰인 경우, InvalidTokenException 예외를 발생시킵니다.
+     *
+     * @param token 파싱하고 유효성을 검사할 JWT 토큰 문자열입니다.
+     * @param allowExpired 만료된 토큰을 허용할지 여부입니다.
+     * @return 파싱된 클레임 객체입니다. 만료된 토큰이 허용되지 않는 경우, 예외가 발생합니다.
+     * @throws InvalidTokenException 토큰이 유효하지 않은 경우 발생합니다.
+     * @throws CustomExpiredJwtException 토큰이 만료되었고, 만료된 토큰이 허용되지 않는 경우 발생합니다.
+     */
 
     public Claims parseAndValidateToken(String token, boolean allowExpired) throws InvalidTokenException, CustomExpiredJwtException {
         try {
@@ -197,6 +241,16 @@ public class JwtTokenProvider {
         }
     }
 
+    /**
+     * 주어진 JWT 토큰의 유효성을 검사합니다.
+     * <p>
+     * 이 메서드는 주어진 JWT 토큰을 파싱하고 유효성을 검사하여 결과를 boolean 값으로 반환합니다.
+     * 토큰이 유효한 경우 true를, 그렇지 않은 경우 false를 반환합니다.
+     *
+     * @param token 유효성을 검사할 JWT 토큰 문자열입니다.
+     * @return 토큰의 유효성 검사 결과입니다. 유효한 경우 true, 그렇지 않은 경우 false입니다.
+     */
+
     public boolean validateToken(String token) {
         try {
             parseAndValidateToken(token, false);
@@ -206,11 +260,23 @@ public class JwtTokenProvider {
         }
     }
 
+    /**
+     * 주어진 JWT 액세스 토큰에서 클레임을 안전하게 파싱합니다.
+     * <p>
+     * 이 메서드는 주어진 액세스 토큰을 파싱하여 클레임을 추출합니다. 만료된 토큰도 허용되며,
+     * 만료된 토큰의 경우, 해당 토큰의 클레임을 반환합니다. 파싱 중 문제가 발생한 경우,
+     * CustomException 예외를 발생시킵니다.
+     *
+     * @param accessToken 클레임을 추출하고자 하는 JWT 액세스 토큰입니다.
+     * @return 추출된 클레임 객체입니다. 토큰 파싱 중 문제가 발생한 경우, CustomException 예외가 발생합니다.
+     * @throws CustomException 토큰 파싱 중 문제가 발생한 경우 발생합니다.
+     */
+
     private Claims parseClaims(String accessToken) {
         try {
             return parseAndValidateToken(accessToken, true);
         } catch (InvalidTokenException | CustomExpiredJwtException e) {
-            return null;
+            throw new CustomException("Token validation failed", e);
         }
     }
 
@@ -226,16 +292,7 @@ public class JwtTokenProvider {
 
 
     /*
-     *//**
-     * JWT 토큰의 유효성을 검증합니다.
-     * <p>
-     * 이 메서드는 주어진 JWT 토큰이 유효한지 검증합니다. 토큰의 서명, 구조, 만료 시간 등을 검사합니다.
-     * 토큰이 모든 검증 조건을 통과하면 true를 반환합니다.
-     *
-     * @param token 검증하고자 하는 JWT 토큰 문자열입니다.
-     * @return 토큰의 유효성 검증 결과를 boolean 값으로 반환합니다. 유효한 경우 true를 반환합니다.
-     * @throws InvalidTokenException 토큰이 유효하지 않은 경우 예외를 발생시킵니다.
-     *//*
+
 
     public boolean validateToken(String token) {
         try {
@@ -265,15 +322,6 @@ public class JwtTokenProvider {
 
     }
 
-    *//**
-     * 주어진 액세스 토큰에서 클레임을 안전하게 파싱합니다.
-     * <p>
-     * 이 메서드는 JWT 토큰을 안전하게 해석하기 위해 예외 처리를 포함합니다.
-     * 토큰이 만료된 경우에도 만료된 토큰의 클레임을 반환할 수 있습니다.
-     *
-     * @param accessToken 클레임을 추출하고자 하는 JWT 액세스 토큰입니다.
-     * @return 추출된 클레임을 포함하는 Claims 객체입니다. 토큰이 만료된 경우 만료된 토큰의 클레임을 반환합니다.
-     *//*
 
     private Claims parseClaims(String accessToken) {
         try {
@@ -289,7 +337,9 @@ public class JwtTokenProvider {
             // 만료된 토큰의 클레임을 반환합니다.
             return e.getClaims();
         }
-    }*/
+    }
+
+    */
 
 
 }

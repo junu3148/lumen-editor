@@ -12,9 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.util.Date;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 @Service
@@ -27,7 +24,7 @@ public class AccountServiceImpl implements AccountService {
 
     // 유저 세부 정보
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<User> getUser(HttpServletRequest request) {
 
         User user = accountRepository.findByUserId(getUserId(request));

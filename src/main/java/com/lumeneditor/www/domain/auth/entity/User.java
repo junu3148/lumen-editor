@@ -1,5 +1,6 @@
 package com.lumeneditor.www.domain.auth.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.lumeneditor.www.comm.eunm.Gender;
 import com.lumeneditor.www.comm.eunm.YesNo;
 import jakarta.persistence.*;
@@ -136,7 +137,9 @@ public class User implements UserDetails {
         return userPassword;
     }
 
-    public String getUserName() {
+
+    @JsonProperty("userName")
+    public String getFullName() {
         return userName;
     }
 

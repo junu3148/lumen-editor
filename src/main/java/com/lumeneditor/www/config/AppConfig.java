@@ -1,10 +1,10 @@
 package com.lumeneditor.www.config;
 
 
+import com.lumeneditor.www.domain.auth.*;
 import com.lumeneditor.www.domain.auth.email.EmailAuthRepository;
 import com.lumeneditor.www.domain.auth.email.EmailService;
 import com.lumeneditor.www.domain.auth.email.EmailServiceImpl;
-import com.lumeneditor.www.domain.auth.*;
 import com.lumeneditor.www.domain.main.account.AccountRepository;
 import com.lumeneditor.www.domain.main.account.AccountService;
 import com.lumeneditor.www.domain.main.account.AccountServiceImpl;
@@ -17,8 +17,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @ComponentScan(basePackages = "com.lumeneditor.www")
@@ -60,7 +58,6 @@ public class AppConfig {
     // AccountService
     @Bean
     public AccountService accountService(AccountRepository accountRepository) {
-
         return new AccountServiceImpl(jwtTokenProvider(), accountRepository);
     }
 
