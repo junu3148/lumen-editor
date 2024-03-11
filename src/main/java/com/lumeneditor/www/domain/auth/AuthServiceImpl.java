@@ -4,6 +4,7 @@ import com.lumeneditor.www.comm.EmailUtils;
 import com.lumeneditor.www.comm.PasswordUtil;
 import com.lumeneditor.www.domain.auth.email.EmailAuthRepository;
 import com.lumeneditor.www.domain.auth.email.EmailService;
+import com.lumeneditor.www.domain.auth.entity.WorkSpaces;
 import com.lumeneditor.www.exception.InvalidTokenException;
 import com.lumeneditor.www.security.JwtTokenProvider;
 import com.lumeneditor.www.domain.auth.entity.EmailAuth;
@@ -31,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthRepository authRepository;
     private final EmailAuthRepository emailAuthRepository;
     private final EmailService emailService;
+    private final WorkSpacesRepository workSpacesRepository;
 
     // 이메일 중복 체크
     @Override
@@ -99,6 +101,12 @@ public class AuthServiceImpl implements AuthService {
             PasswordUtil.encodeAndSetPassword(user);
 
             authRepository.save(user);
+
+            WorkSpaces workSpace = new WorkSpaces();
+            workSpace.setUser(user);
+
+            workSpacesRepository.save(workSpace);
+
             return ResponseEntity.ok(true); // 성공적으로 저장되었을 때 true 반환
         } catch (DataIntegrityViolationException e) {
             // 데이터베이스 제약 조건 위반 등의 예외 처리

@@ -24,6 +24,7 @@ public class EmailAuth {
     @Column(unique = true)
     private String authEmail;
 
+    @Column(nullable = false)
     private String authCode;
 
     @Enumerated(EnumType.STRING)

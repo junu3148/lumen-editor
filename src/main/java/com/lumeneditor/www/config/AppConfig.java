@@ -45,8 +45,8 @@ public class AppConfig {
 
     // AuthService 빈 정의
     @Bean
-    public AuthService authService(AuthRepository authRepository, EmailAuthRepository emailAuthRepository) {
-        return new AuthServiceImpl(redisTemplate, jwtTokenProvider(), authRepository, emailAuthRepository, emailService());
+    public AuthService authService(AuthRepository authRepository, EmailAuthRepository emailAuthRepository, WorkSpacesRepository workSpacesRepository) {
+        return new AuthServiceImpl(redisTemplate, jwtTokenProvider(), authRepository, emailAuthRepository, emailService(), workSpacesRepository);
     }
 
     // EmailService 빈 정의
